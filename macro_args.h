@@ -28,21 +28,21 @@
 #define _ARG_IS_ALNUM_CHAR(c)       (((c) >= 'a' && (c) <= 'z') || ((c) >= 'A' && (c) <= 'Z') || ((c) >= '0' && (c) <= '9'))
 #define _ARG_IS_EMPTY_STR(s)        (sizeof(s) == 1)
 
-#define _ARG_LIT       0
-#define _ARG_INT       1
-#define _ARG_FLOAT     2
-#define _ARG_STR       3
-#define _ARG__T(TYPE)       _ARG_##TYPE
+#define _ARG__LIT       0
+#define _ARG__INT       1
+#define _ARG__NUM       2
+#define _ARG__STR       3
+#define _ARG__T(TYPE)       _ARG__##TYPE
 
 #define _ARG__NEED_LIT      0
 #define _ARG__NEED_INT      1
-#define _ARG__NEED_FLOAT    1
+#define _ARG__NEED_NUM    1
 #define _ARG__NEED_STR      1
 #define _ARG__NEED(TYPE)    _ARG__NEED_##TYPE
 
 #define _ARG_TYPE_LIT   int
 #define _ARG_TYPE_INT   int
-#define _ARG_TYPE_FLOAT double
+#define _ARG_TYPE_NUM   double
 #define _ARG_TYPE_STR   char *
 
 #define _ARG_LIT_FROMSTR(STR, PVAL)     (*(PVAL) = 1, 1)
@@ -52,7 +52,7 @@ static inline int _ARG_INT_FROMSTR(const char *STR, _ARG_TYPE_INT *PVAL) {
     *PVAL = strtol(STR, &p, 10);
     return (*p) == '\0';
 }
-static inline int _ARG_FLOAT_FROMSTR(const char *STR, _ARG_TYPE_FLOAT *PVAL) {
+static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
     char *p = NULL;
     *PVAL = strtod(STR, &p);
     return (*p) == '\0';
@@ -64,7 +64,7 @@ static inline int _ARG_FLOAT_FROMSTR(const char *STR, _ARG_TYPE_FLOAT *PVAL) {
 
 #define _ARG_LIT_FMT    "%d"
 #define _ARG_INT_FMT    "%d"
-#define _ARG_FLOAT_FMT  "%g"
+#define _ARG_NUM_FMT    "%g"
 #define _ARG_STR_FMT    "%s"
 
 #define _ARG_PFMT(TYPE)         _ARG_##TYPE##_FMT
@@ -238,49 +238,25 @@ static inline int _ARG_FLOAT_FROMSTR(const char *STR, _ARG_TYPE_FLOAT *PVAL) {
 #define ARG_STRUCT_INIT(LIST, name) \
     struct ARG_STRUCT_NAME(LIST) name = ARG_STRUCT_INITIALIZER(LIST)
 
-/*
 
-// Use Example:
+#define ARG_LIT_N(X, N, NAME, SHORT, LONG, DESC) \
+    X(LIT, N, NAME, SHORT, LONG, "", 0, DESC)
+#define ARG_INT_N(X, N, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    X(INT, N, NAME, SHORT, LONG, HINT, DEF, DESC)
+#define ARG_NUM_N(X, N, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    X(NUM, N, NAME, SHORT, LONG, HINT, DEF, DESC)
+#define ARG_STR_N(X, N, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    X(STR, N, NAME, SHORT, LONG, HINT, DEF, DESC)
 
-// Define arg list
-// TYPE, LIMIT, NAME, SHORT, LONG, HINT, DEFAULT, DESCRIPTION
-#define APP_ARGS_LIST(X) \
-    X(LIT,   0, help,      'h', "help",     "",        0,       "show help") \
-    X(LIT,   0, print,     'p', "print",    "",        0,       "print arg struct") \
-    X(INT,   0, verbose,   'v', "verbose",  "<level>", 0,       "verbose level") \
-    X(FLOAT, 0, timeout,   't', "timeout",  "<secs>",  0.0,     "timeout in secs") \
-    X(INT,   0, longonly,  0,   "longonly", "<flag>",  0,       "test long only arg") \
-    X(INT,   0, shortonly, 's', "",         "<test>",  0,       "test short only arg") \
-    X(STR,   0, from,      'f', "from",     "<file>",  NULL,    "file path")
-
-// Generate essential
-ARG_DEFINE(APP_ARGS_LIST);
-
-int main(int argc, char **argv)
-{
-    // Use
-    ARG_STRUCT_INIT(APP_ARGS_LIST, args);
-    // Before ARG_PARSE, user may change arg fields
-    // ret > 0 => optind, < 0 => error!
-    int ret = ARG_PARSE(APP_ARGS_LIST, argc, argv, &arg);
-    if (ret < 0) {
-        return ret;
-    }
-
-    if (arg.ARG_FIELD_NAME(print) > 0) {
-        printf("optind =%d\n", ret);
-        ARG_STRUCT_PRINT(APP_ARGS_LIST, &arg);
-        printf("\n");
-    }
-    if (arg.ARG_FIELD_NAME(help) > 0) {
-        printf("Usage: %s", argv[0]);
-        ARG_PRINT_SYNTAX(APP_ARGS_LIST);
-        printf("\n\nExample:\n");
-        ARG_PRINT_GLOSSARY(APP_ARGS_LIST, 30);
-        return 0;
-    }
-    return 0;
-}
-*/
+#define ARG_LIT(X, NAME, SHORT, LONG, DESC) \
+    ARG_LIT_N(X, 0, NAME, SHORT, LONG, DESC)
+#define ARG_INT(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    ARG_INT_N(X, 0, NAME, SHORT, LONG, HINT, DEF, DESC)
+#define ARG_NUM(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    ARG_NUM_N(X, 0, NAME, SHORT, LONG, HINT, DEF, DESC)
+#define ARG_STR(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
+    ARG_STR_N(X, 0, NAME, SHORT, LONG, HINT, DEF, DESC)
 
 #endif // _MACRO_ARGS_H
+
+

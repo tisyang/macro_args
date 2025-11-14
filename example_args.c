@@ -3,13 +3,13 @@
 // Define arg list
 // TYPE, LIMIT, NAME, SHORT, LONG, HINT, DEFAULT, DESCRIPTION
 #define APP_ARGS_LIST(X) \
-    X(LIT,   0, help,      'h', "help",     "",        0,       "show help") \
-    X(LIT,   0, print,     'p', "print",    "",        0,       "print arg struct") \
-    X(INT,   0, verbose,   'v', "verbose",  "<level>", 0,       "verbose level") \
-    X(FLOAT, 0, timeout,   't', "timeout",  "<secs>",  0.0,     "timeout in secs") \
-    X(INT,   0, longonly,  0,   "longonly", "<flag>",  0,       "test long only arg") \
-    X(INT,   0, shortonly, 's', "",         "<test>",  0,       "test short only arg") \
-    X(STR,   0, from,      'f', "from",     "<file>",  NULL,    "file path")
+    ARG_LIT(X, help,      'h', "help",     "show help") \
+    ARG_LIT(X, print,     'p', "print",    "print arg struct") \
+    ARG_INT(X, verbose,   'v', "verbose",  "<level>", 0,    "verbose level") \
+    ARG_NUM(X, timeout,   't', "timeout",  "<secs>",  0.0,  "timeout in secs") \
+    ARG_INT(X, longonly,  0,   "longonly", "<flag>",  0,    "test long only arg") \
+    ARG_INT(X, shortonly, 's', "",         "<test>",  0,    "test short only arg") \
+    ARG_STR(X, from,      'f', "from",     "<file>",  NULL, "file path")
 
 // Generate essential
 ARG_DEFINE(APP_ARGS_LIST);
