@@ -45,17 +45,28 @@
 #define _ARG_TYPE_FLOAT double
 #define _ARG_TYPE_STR   char *
 
-#define _ARG_LIT_FROMSTR(x)     0
-#define _ARG_INT_FROMSTR(x)     atoi(x)
-#define _ARG_FLOAT_FROMSTR(x)   atof(x)
-#define _ARG_STR_FROMSTR(x)     (x)
+#define _ARG_LIT_FROMSTR(STR, PVAL)     (*(PVAL) = 1, 1)
+
+static inline int _ARG_INT_FROMSTR(const char *STR, _ARG_TYPE_INT *PVAL) {
+    char *p = NULL;
+    *PVAL = strtol(STR, &p, 10);
+    return (*p) == '\0';
+}
+static inline int _ARG_FLOAT_FROMSTR(const char *STR, _ARG_TYPE_FLOAT *PVAL) {
+    char *p = NULL;
+    *PVAL = strtod(STR, &p);
+    return (*p) == '\0';
+}
+
+#define _ARG_STR_FROMSTR(STR, PVAL)     (*(PVAL) = STR, 1)
+
+#define _ARG_FROM_STR(TYPE, STR, PVAL)  _ARG_##TYPE##_FROMSTR(STR, PVAL)
 
 #define _ARG_LIT_FMT    "%d"
 #define _ARG_INT_FMT    "%d"
 #define _ARG_FLOAT_FMT  "%g"
 #define _ARG_STR_FMT    "%s"
 
-#define _ARG_FROM_STR(TYPE, s)  _ARG_##TYPE##_FROMSTR(s)
 #define _ARG_PFMT(TYPE)         _ARG_##TYPE##_FMT
 
 #define _ARG_FIELD_TYPE(TYPE)   _ARG_TYPE_##TYPE
@@ -95,11 +106,12 @@
     _Static_assert(_ARG_CHECK_SHORT_LONG(SHORT, LONG), "Short and long cannot all be empty"); \
     _Static_assert(_ARG_CHECK_HINT(TYPE, HINT), "Datahint invalid when TYPE == LIT");
 
+#define _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, SEP)    \
+    SHORT ? (char[]){ '-', SHORT, '\0' } : "", (SHORT && _ARG_HAS_LONG(LONG)) ? SEP : "", _ARG_HAS_LONG(LONG) ? "--"LONG : ""
+
 
 #define _ARG_X_SYNTAX(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    printf(" [%s%s%s%s]", SHORT ? (char[]){ '-', SHORT, '\0' } : "", \
-           (SHORT && _ARG_HAS_LONG(LONG)) ? "|" : "", \
-           _ARG_HAS_LONG(LONG) ? "--"LONG : "",\
+    printf(" [%s%s%s%s]", _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, "|"), \
            _ARG_HAS_HINT(HINT) ? "="HINT : "");
 
 #define ARG_PRINT_SYNTAX(LIST) \
@@ -107,9 +119,7 @@
 
 #define _ARG_X_GLOSSARY(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     do { \
-        int p = printf(" %s%s%s%s", SHORT ? (char[]){ '-', SHORT, '\0' } : "", \
-                       (SHORT && _ARG_HAS_LONG(LONG)) ? ", " : "", \
-                       _ARG_HAS_LONG(LONG) ? "--"LONG : "", \
+        int p = printf(" %s%s%s%s", _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
                        _ARG_HAS_HINT(HINT) ? "="HINT : "");\
         if (p < 0) p = 0; p = _arg_preflen - p; if (p < 0) p = 0; \
         printf("%-*s%s\n", p, "", DESC ?: ""); \
@@ -127,9 +137,7 @@
         printf(" arg [%d]%s: ", p_arg->ARG_FIELD_N_NAME(NAME), #NAME); \
         printf(_ARG_PFMT(TYPE), p_arg->ARG_FIELD_NAME(NAME)); \
         printf("\t(%s%s%s%s, %s)\n", \
-               SHORT ? (char[]){'-', SHORT, '\0'} : "", \
-               (SHORT && _ARG_HAS_LONG(LONG)) ? ", " : "", \
-               _ARG_HAS_LONG(LONG) ? "--"LONG : "", \
+               _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
                _ARG_HAS_HINT(HINT) ? "="HINT : "", \
                DESC ?: ""); \
     } while (0);
@@ -142,13 +150,23 @@
 
 #define _ARG_X_PARSE_MATCH(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     if (MAXCNT == 0  || p_arg->ARG_FIELD_N_NAME(NAME) < MAXCNT) { \
-        _ARG_IF_ELSE(_ARG__NEED(TYPE), \
-                     p_arg->ARG_FIELD_NAME(NAME) = _ARG_FROM_STR(TYPE, optarg), \
-                     p_arg->ARG_FIELD_NAME(NAME) += 1); \
-        p_arg->ARG_FIELD_N_NAME(NAME) += 1; \
-        arg_match = 1; \
+        _ARG_FIELD_TYPE(TYPE) val; \
+        if (_ARG_FROM_STR(TYPE, optarg, &val)) { \
+            _ARG_IF_ELSE(_ARG__NEED(TYPE), \
+                         p_arg->ARG_FIELD_NAME(NAME) = val, \
+                         p_arg->ARG_FIELD_NAME(NAME) += 1); \
+                p_arg->ARG_FIELD_N_NAME(NAME) += 1; \
+                arg_match = 1; \
+        } else { \
+            fprintf(stderr, "%s: %s%s%s: invalid argument '%s'\n", \
+                    argv[0], _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ","), \
+                    optarg); \
+            arg_ret = -1; \
+        } \
     } else { \
-        fprintf(stderr, "%s: option -%c,%s: too many arguments (Max %d)\n", argv[0], SHORT, #NAME, MAXCNT); \
+        fprintf(stderr, "%s: %s%s%s: too many arguments (Max %d)\n", \
+                    argv[0], _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ","), \
+                    MAXCNT); \
         arg_ret = -1; \
     }\
 
@@ -266,5 +284,3 @@ int main(int argc, char **argv)
 */
 
 #endif // _MACRO_ARGS_H
-
-
