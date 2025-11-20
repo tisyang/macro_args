@@ -14,7 +14,7 @@ See [Example](example_args.c)
 
 ```bash
 # compile
-gcc -Wall -Wno-unused-value --o args example_args.c
+gcc -Wall -o args example_args.c
 
 # run
  ./args -h
