@@ -176,21 +176,23 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
         LIST(_ARG_X_GLOSSARY) \
     } while (0);
 
+#define _ARG__DO_PRINT_NEED(TYPE, NAME) \
+    for (int i = 0; i < p_arg->ARG_FIELD_N_NAME(NAME); i++) { \
+        if (i) { printf(", "); } else { printf("\n    "); } \
+        printf(_ARG_PFMT(TYPE), p_arg->ARG_FIELD_NAME(NAME)[i]); \
+    } \
+    printf("\n")
+
+#define _ARG__DO_PRINT_NONEED(TYPE, NAME) \
+    printf("\n")
+
 #define _ARG_X_STRUCT_PRINT(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     do { \
         printf(" arg %s(%s%s%s%s, %s): [%d%s]", \
-               #NAME, \
-               _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
-               _ARG_HAS_HINT(HINT) ? "="HINT : "", \
-               DESC ?: "", p_arg->ARG_FIELD_N_NAME(NAME), _ARG_IF_ELSE(_ARG__NEED(TYPE), "/" #MAXCNT, "")); \
-        for (int i = 0; i < _ARG_IF_ELSE(_ARG__NEED(TYPE), p_arg->ARG_FIELD_N_NAME(NAME), 0); i++) { \
-            if (!i) { printf("\n  "); } \
-            if (i) { printf(", "); } \
-            _ARG_IF_ELSE(_ARG__NEED(TYPE), \
-                         printf(_ARG_PFMT(TYPE), p_arg->ARG_FIELD_NAME(NAME)[i]), \
-                         printf(_ARG_PFMT(TYPE), p_arg->ARG_FIELD_N_NAME(NAME))); \
-        } \
-        printf("\n"); \
+               #NAME, _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
+               _ARG_HAS_HINT(HINT) ? "="HINT : "", DESC ?: "", \
+               p_arg->ARG_FIELD_N_NAME(NAME), _ARG_IF_ELSE(_ARG__NEED(TYPE), "/" #MAXCNT, "")); \
+        _ARG_IF_ELSE(_ARG__NEED(TYPE), _ARG__DO_PRINT_NEED, _ARG__DO_PRINT_NONEED)(TYPE, NAME); \
     } while (0);
 
 #define ARG_STRUCT_PRINT(LIST, STRUCT_P) \
