@@ -1,11 +1,12 @@
 # macro_args
-command line arguments process by x-macros
+command line arguments parse using c x-macros
 
 ## Feature
 1. Header file only.
-2. No malloc.
+2. No malloc/free.
 3. Less depends, only std and `getopt`.
-4. Support shot arg opt and long arg opt.
+4. Support shot argument and long argument.
+5. Support multiple occurrences of the same argument.
 
 ## Usage
 See [Example](example_args.c)
@@ -13,33 +14,48 @@ See [Example](example_args.c)
 
 ```bash
 # compile
-gcc -o args example_args.c
+gcc -Wall -Wno-unused-value --o args example_args.c
+
 # run
-./args -h
-Usage: ./args [-h|--help] [-p|--print] [-v|--verbose=<level>] [-t|--timeout=<secs>] [--longonly=<flag>] [-s=<test>] [-f|--from=<file>]
+ ./args -h
+Usage: ./args [-h|--help] [-p|--print] [-v|--verbose] [-t|--timeout=<secs>] [--longonly] [-s] [-f|--from=<file>] [-k|--token=<token>]
 
 Example:
  -h, --help                   show help
  -p, --print                  print arg struct
- -v, --verbose=<level>        verbose level
+ -v, --verbose                verbose
  -t, --timeout=<secs>         timeout in secs
- --longonly=<flag>            test long only arg
- -s=<test>                    test short only arg
+ --longonly                   test long only arg
+ -s                           test short only arg
  -f, --from=<file>            file path
+ -k, --token=<token>          process tokens
 
 # run
-./args -p
+ ./args -p
 optind =2
- arg [0]help: 0 (-h, --help, show help)
- arg [1]print: 1        (-p, --print, print arg struct)
- arg [0]verbose: 0      (-v, --verbose=<level>, verbose level)
- arg [0]timeout: 0      (-t, --timeout=<secs>, timeout in secs)
- arg [0]longonly: 0     (--longonly=<flag>, test long only arg)
- arg [0]shortonly: 0    (-s=<test>, test short only arg)
- arg [0]from: (null)    (-f, --from=<file>, file path)
+ arg help(-h, --help, show help): [0]
+     0
+ arg print(-p, --print, print arg struct): [1]
+     1
+ arg verbose(-v, --verbose, verbose): [0]
+     0
+ arg timeout(-t, --timeout=<secs>, timeout in secs): [0/1]
+     
+ arg longonly(--longonly, test long only arg): [0]
+     0
+ arg shortonly(-s, test short only arg): [0]
+     0
+ arg from(-f, --from=<file>, file path): [0/1]
+     
+ arg token(-k, --token=<token>, process tokens): [0/32]
+     
+
+Need token provide
 
 # run
 ./args --not-exists
 ./args: unrecognized option '--not-exists'
+Usage: ./args [-h|--help] [-p|--print] [-v|--verbose] [-t|--timeout=<secs>] [--longonly] [-s] [-f|--from=<file>] [-k|--token=<token>]
+
 
 ```
