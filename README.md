@@ -31,24 +31,16 @@ Example:
  -k, --token=<token>          process tokens
 
 # run
- ./args -p
+./args -p
 optind =2
  arg help(-h, --help, show help): [0]
-     0
  arg print(-p, --print, print arg struct): [1]
-     1
  arg verbose(-v, --verbose, verbose): [0]
-     0
  arg timeout(-t, --timeout=<secs>, timeout in secs): [0/1]
-     
  arg longonly(--longonly, test long only arg): [0]
-     0
  arg shortonly(-s, test short only arg): [0]
-     0
  arg from(-f, --from=<file>, file path): [0/1]
-     
  arg token(-k, --token=<token>, process tokens): [0/32]
-     
 
 Need token provide
 
@@ -57,5 +49,21 @@ Need token provide
 ./args: unrecognized option '--not-exists'
 Usage: ./args [-h|--help] [-p|--print] [-v|--verbose] [-t|--timeout=<secs>] [--longonly] [-s] [-f|--from=<file>] [-k|--token=<token>]
 
+./args -t 3.2323 -k token1 -k token2 -k token3 -p
+optind =10
+ arg help(-h, --help, show help): [0]
+ arg print(-p, --print, print arg struct): [1]
+ arg verbose(-v, --verbose, verbose): [0]
+ arg timeout(-t, --timeout=<secs>, timeout in secs): [1/1]
+  3.2323
+ arg longonly(--longonly, test long only arg): [0]
+ arg shortonly(-s, test short only arg): [0]
+ arg from(-f, --from=<file>, file path): [0/1]
+ arg token(-k, --token=<token>, process tokens): [3/32]
+  token1, token2, token3
+
+token 0: token1
+token 1: token2
+token 2: token3
 
 ```

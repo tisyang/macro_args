@@ -175,12 +175,13 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
 
 #define _ARG_X_STRUCT_PRINT(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     do { \
-        printf(" arg %s(%s%s%s%s, %s): [%d%s]\n     ", \
+        printf(" arg %s(%s%s%s%s, %s): [%d%s]", \
                #NAME, \
                _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
                _ARG_HAS_HINT(HINT) ? "="HINT : "", \
                DESC ?: "", p_arg->ARG_FIELD_N_NAME(NAME), _ARG_IF_ELSE(_ARG__NEED(TYPE), "/" #MAXCNT, "")); \
-        for (int i = 0; i < _ARG_IF_ELSE(_ARG__NEED(TYPE), p_arg->ARG_FIELD_N_NAME(NAME), 1); i++) { \
+        for (int i = 0; i < _ARG_IF_ELSE(_ARG__NEED(TYPE), p_arg->ARG_FIELD_N_NAME(NAME), 0); i++) { \
+            if (!i) { printf("\n  "); } \
             if (i) { printf(", "); } \
             _ARG_IF_ELSE(_ARG__NEED(TYPE), \
                          printf(_ARG_PFMT(TYPE), p_arg->ARG_FIELD_NAME(NAME)[i]), \
