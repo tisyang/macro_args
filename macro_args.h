@@ -72,41 +72,7 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
 #define ARG_FIELD_NAME(NAME)    arg_##NAME
 #define ARG_FIELD_N_NAME(NAME)  n_##NAME
 
-#define _ARG_REPEAT_1(M)    M
-#define _ARG_REPEAT_2(M)    M, _ARG_REPEAT_1(M)
-#define _ARG_REPEAT_3(M)    M, _ARG_REPEAT_2(M)
-#define _ARG_REPEAT_4(M)    M, _ARG_REPEAT_3(M)
-#define _ARG_REPEAT_5(M)    M, _ARG_REPEAT_4(M)
-#define _ARG_REPEAT_6(M)    M, _ARG_REPEAT_5(M)
-#define _ARG_REPEAT_7(M)    M, _ARG_REPEAT_6(M)
-#define _ARG_REPEAT_8(M)    M, _ARG_REPEAT_7(M)
-#define _ARG_REPEAT_9(M)    M, _ARG_REPEAT_8(M)
-#define _ARG_REPEAT_10(M)   M, _ARG_REPEAT_9(M)
-#define _ARG_REPEAT_11(M)   M, _ARG_REPEAT_10(M)
-#define _ARG_REPEAT_12(M)   M, _ARG_REPEAT_11(M)
-#define _ARG_REPEAT_13(M)   M, _ARG_REPEAT_12(M)
-#define _ARG_REPEAT_14(M)   M, _ARG_REPEAT_13(M)
-#define _ARG_REPEAT_15(M)   M, _ARG_REPEAT_14(M)
-#define _ARG_REPEAT_16(M)   M, _ARG_REPEAT_15(M)
-#define _ARG_REPEAT_17(M)   M, _ARG_REPEAT_16(M)
-#define _ARG_REPEAT_18(M)   M, _ARG_REPEAT_17(M)
-#define _ARG_REPEAT_19(M)   M, _ARG_REPEAT_18(M)
-#define _ARG_REPEAT_20(M)   M, _ARG_REPEAT_19(M)
-#define _ARG_REPEAT_21(M)   M, _ARG_REPEAT_20(M)
-#define _ARG_REPEAT_22(M)   M, _ARG_REPEAT_21(M)
-#define _ARG_REPEAT_23(M)   M, _ARG_REPEAT_22(M)
-#define _ARG_REPEAT_24(M)   M, _ARG_REPEAT_23(M)
-#define _ARG_REPEAT_25(M)   M, _ARG_REPEAT_24(M)
-#define _ARG_REPEAT_26(M)   M, _ARG_REPEAT_25(M)
-#define _ARG_REPEAT_27(M)   M, _ARG_REPEAT_26(M)
-#define _ARG_REPEAT_28(M)   M, _ARG_REPEAT_27(M)
-#define _ARG_REPEAT_29(M)   M, _ARG_REPEAT_28(M)
-#define _ARG_REPEAT_30(M)   M, _ARG_REPEAT_29(M)
-#define _ARG_REPEAT_31(M)   M, _ARG_REPEAT_30(M)
-#define _ARG_REPEAT_32(M)   M, _ARG_REPEAT_31(M)
-#define _ARG_REPEAT_0(M)    _ARG_REPEAT_32(M)
-#define _ARG_MAXCNT_DEF     32
-#define _ARG_REPEAT(N, M)   _ARG_CONCAT2(_ARG_REPEAT_, N)(M)
+#define _ARG_MAXCNT_DEF     256
 #define _ARG_BRACES(...)    { __VA_ARGS__ }
 
 #define _ARG_X_STRUCT_FIELD(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
@@ -115,14 +81,14 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
                  _ARG_FIELD_TYPE(TYPE) ARG_FIELD_NAME(NAME)[MAXCNT], );
 
 #define _ARG_DO_INIT_ARRAY(NAME, MAXCNT, DEF) \
-    .ARG_FIELD_NAME(NAME) = _ARG_BRACES(_ARG_REPEAT(MAXCNT, DEF)),
-#define _ARG_DO_INIT_ZERO(NAME, MAXCNT, DEF)
+    .ARG_FIELD_NAME(NAME) = _ARG_BRACES(DEF),
+#define _ARG_DO_INIT_EMPTY(NAME, MAXCNT, DEF)
 
 #define _ARG_X_STRUCT_DEFAULT(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     .ARG_FIELD_N_NAME(NAME) = 0, \
     _ARG_IF_ELSE(_ARG__NEED(TYPE), \
                  _ARG_DO_INIT_ARRAY, \
-                 _ARG_DO_INIT_ZERO)(NAME, MAXCNT, DEF)
+                 _ARG_DO_INIT_EMPTY)(NAME, MAXCNT, DEF)
 
 #define ARG_STRUCT_NAME(LIST)  st_##LIST##_name
 

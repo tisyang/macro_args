@@ -14,8 +14,8 @@
     ARG_NUM1(X, timeout,    't', "timeout",     "<secs>",  0.0,  "timeout in secs") \
     ARG_LIT1(X, longonly,   0,   "longonly",    "test long only arg") \
     ARG_LIT1(X, shortonly,  's', "",            "test short only arg") \
-    ARG_STR1(X, from,       'f', "from",        "<file>",  NULL, "file path") \
-    ARG_STRX(X, token,      'k', "token",       "<token>", NULL, "process tokens")
+    ARG_STR1(X, from,       'f', "from",        "<file>",  "1.txt", "file path") \
+    ARG_STRX(X, token,      'k', "token",       "<token>", "token0", "process tokens")
 
 // 2. Generate essential
 ARG_DEFINE(APP_ARGS_LIST);
@@ -56,5 +56,7 @@ int main(int argc, char **argv)
             printf("token %d: %s\n", i, arg.arg_token[i]);
         }
     }
+    // only first of args will be default, other will fill by zero.
+    printf("from: %s\n", arg.arg_from[0]);
     return 0;
 }
