@@ -19,6 +19,13 @@
 #define _ARG_STRINGIFY(A)   _ARG_STRINGIFY_IMPL(A)
 #define _ARG_CONCAT2_IMPL(A, B) A ## B
 #define _ARG_CONCAT2(A, B)    _ARG_CONCAT2_IMPL(A, B)
+
+#define _ARG_CHECK_N(x, n, ...)     n
+#define _ARG_PROBE(x)               x, 0,
+#define _ARG_PROBE_0                _ARG_PROBE(~)
+#define _ARG_CHECK(...)             _ARG_CHECK_N(__VA_ARGS__)
+#define _ARG_BOOL(x)                _ARG_CHECK(_ARG_CONCAT2(_ARG_PROBE_, x), 1)
+
 #define _ARG_IF_ELSE_0(THEN, ELSE) ELSE
 #define _ARG_IF_ELSE_1(THEN, ELSE) THEN
 #define _ARG_IF_ELSE_IMPL(CONDITION, THEN, ELSE)    _ARG_CONCAT2(_ARG_IF_ELSE_, CONDITION)(THEN, ELSE)
@@ -32,12 +39,7 @@
 #define _ARG__NUM       2
 #define _ARG__STR       3
 #define _ARG__T(TYPE)       _ARG__##TYPE
-
-#define _ARG__NEED_LIT      0
-#define _ARG__NEED_INT      1
-#define _ARG__NEED_NUM      1
-#define _ARG__NEED_STR      1
-#define _ARG__NEED(TYPE)    _ARG__NEED_##TYPE
+#define _ARG__NEED(TYPE)    _ARG_BOOL(_ARG__T(TYPE)) 
 
 #define _ARG_TYPE_LIT   int
 #define _ARG_TYPE_INT   int
@@ -78,7 +80,7 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
 #define _ARG_X_STRUCT_FIELD(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     int ARG_FIELD_N_NAME(NAME); \
     _ARG_IF_ELSE(_ARG__NEED(TYPE), \
-                 _ARG_FIELD_TYPE(TYPE) ARG_FIELD_NAME(NAME)[MAXCNT], );
+                 _ARG_FIELD_TYPE(TYPE) ARG_FIELD_NAME(NAME)[_ARG_IF_ELSE(_ARG_BOOL(MAXCNT), MAXCNT, _ARG_MAXCNT_DEF)], );
 
 #define _ARG_DO_INIT_ARRAY(NAME, MAXCNT, DEF) \
     .ARG_FIELD_NAME(NAME) = _ARG_BRACES(DEF),
@@ -108,7 +110,7 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
 
 #define _ARG_X_STATIC_CHECK(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     _Static_assert(_ARG__T(TYPE) >= 0, "Unknown TYPE"); \
-    _Static_assert(!_ARG__NEED(TYPE) || (MAXCNT >= 1 && MAXCNT <= _ARG_MAXCNT_DEF), "Maxcount must >= 1 and <= 32"); \
+    _Static_assert(MAXCNT >= 0,  "Maxcount must >= 0"); \
     _Static_assert(LONG != NULL, "Long should not be NULL, use \"\""); \
     _Static_assert(HINT != NULL, "Hint should not be NULL, use \"\""); \
     _Static_assert(!SHORT || _ARG_HAS_SHORT(SHORT), "Short opt char must be alphanumberic or 0"); \
@@ -156,7 +158,7 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
         printf(" arg %s(%s%s%s%s, %s): [%d%s]", \
                #NAME, _ARG_GEN3STR_SHORT_LONG(SHORT, LONG, ", "), \
                _ARG_HAS_HINT(HINT) ? "="HINT : "", DESC ?: "", \
-               p_arg->ARG_FIELD_N_NAME(NAME), _ARG_IF_ELSE(_ARG__NEED(TYPE), "/" #MAXCNT, "")); \
+               p_arg->ARG_FIELD_N_NAME(NAME), _ARG_IF_ELSE(_ARG__NEED(TYPE), _ARG_IF_ELSE(_ARG_BOOL(MAXCNT), "/"#MAXCNT, ""), "")); \
         _ARG_IF_ELSE(_ARG__NEED(TYPE), _ARG__DO_PRINT_NEED, _ARG__DO_PRINT_NONEED)(TYPE, NAME); \
     } while (0);
 
@@ -167,7 +169,7 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
     } while (0)
 
 #define _ARG_X_PARSE_MATCH(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    if (p_arg->ARG_FIELD_N_NAME(NAME) < MAXCNT) { \
+    if (p_arg->ARG_FIELD_N_NAME(NAME) < (MAXCNT ?: _ARG_MAXCNT_DEF)) { \
         _ARG_FIELD_TYPE(TYPE) val; \
         if (_ARG_FROM_STR(TYPE, optarg, &val)) { \
             _ARG_IF_ELSE(_ARG__NEED(TYPE), \
@@ -192,10 +194,8 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
 
 #define _ARG_PARSE_FUNC_NAME(LIST)  _arg_parse_##LIST
 
-#define _ARG_LONG_GEN _ARG_STRINGIFY(_ARG_CONCAT2(__dummy_long_opt_gen_id_, __COUNTER__))
-
 #define _ARG_X_OPTIONS_ITEM(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    { _ARG_HAS_LONG(LONG) ? LONG : _ARG_LONG_GEN, _ARG__NEED(TYPE) ? required_argument : no_argument, 0, SHORT },
+    { _ARG_HAS_LONG(LONG) ? LONG : "", _ARG__NEED(TYPE) ? required_argument : no_argument, 0, SHORT },
 
 #define _ARG_X_PARSE_0(TYPE, MAXCNT, NAME, SHORT, LONG, HINT, DEF, DESC) \
     if (strcmp(arg_options[arg_index].name, LONG) == 0) { \
@@ -234,11 +234,12 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
                     LIST(_ARG_X_PARSE_0) \
                     arg_ret = -1; \
                 } while (0); \
+            } else { \
+                do { \
+                    LIST(_ARG_X_PARSE_SHORT) \
+                    arg_ret = -1; \
+                } while (0); \
             } \
-            do { \
-                LIST(_ARG_X_PARSE_SHORT) \
-                arg_ret = -1; \
-            } while (0); \
             if (arg_ret < 0) break; \
         } \
         return arg_ret ?: optind ; \
@@ -274,13 +275,13 @@ static inline int _ARG_NUM_FROMSTR(const char *STR, _ARG_TYPE_NUM *PVAL) {
     ARG_STR_N(1, X, NAME, SHORT, LONG, HINT, DEF, DESC)
 
 #define ARG_LITX(X, NAME, SHORT, LONG, DESC) \
-    ARG_LIT_N(256, X, NAME, SHORT, LONG, DESC)
+    ARG_LIT_N(0, X, NAME, SHORT, LONG, DESC)
 #define ARG_INTX(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    ARG_INT_N(_ARG_MAXCNT_DEF, X, NAME, SHORT, LONG, HINT, DEF, DESC)
+    ARG_INT_N(0, X, NAME, SHORT, LONG, HINT, DEF, DESC)
 #define ARG_NUMX(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    ARG_NUM_N(_ARG_MAXCNT_DEF, X, NAME, SHORT, LONG, HINT, DEF, DESC)
+    ARG_NUM_N(0, X, NAME, SHORT, LONG, HINT, DEF, DESC)
 #define ARG_STRX(X, NAME, SHORT, LONG, HINT, DEF, DESC) \
-    ARG_STR_N(_ARG_MAXCNT_DEF, X, NAME, SHORT, LONG, HINT, DEF, DESC)
+    ARG_STR_N(0, X, NAME, SHORT, LONG, HINT, DEF, DESC)
 
 #endif // _MACRO_ARGS_H
 
